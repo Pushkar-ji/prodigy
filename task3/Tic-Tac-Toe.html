@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tic-Tac-Toe</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body {
+      background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .container { text-align: center; }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      color: #00d2ff;
+    }
+
+    .menu {
+      margin-bottom: 20px;
+    }
+
+    .menu button, #reset, #back {
+      margin: 10px 5px;
+      padding: 10px 25px;
+      font-size: 1rem;
+      background: #00d2ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .menu button:hover, #reset:hover, #back:hover {
+      background: #3a7bd5;
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: rgba(255, 255, 255, 0.1);
+      font-size: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 10px;
+      user-select: none;
+      transition: background 0.3s;
+    }
+
+    .cell:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .status {
+      font-size: 1.2rem;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tic-Tac-Toe</h1>
+
+    <!-- Game Mode Selection -->
+    <div class="menu" id="menu">
+      <p>Select Game Mode:</p>
+      <button onclick="startGame('pvp')">Player vs Player</button>
+      <button onclick="startGame('bot')">Player vs Bot</button>
+    </div>
+
+    <!-- Game Board -->
+    <div class="game-board" id="board" style="display: none;">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+
+    <!-- Game Info and Controls -->
+    <p class="status" id="status" style="display: none;"></p>
+    <button id="reset" style="display: none;">Restart Game</button>
+    <button id="back" style="display: none;">Back to Mode Selection</button>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const statusText = document.getElementById('status');
+    const resetBtn = document.getElementById('reset');
+    const backBtn = document.getElementById('back');
+    const menu = document.getElementById('menu');
+    const cells = document.querySelectorAll('.cell');
+
+    let currentPlayer = 'X';
+    let gameState = Array(9).fill('');
+    let isGameActive = true;
+    let mode = 'pvp';
+
+    const winConditions = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    function startGame(selectedMode) {
+      mode = selectedMode;
+      gameState = Array(9).fill('');
+      isGameActive = true;
+      currentPlayer = 'X';
+      cells.forEach(cell => cell.textContent = '');
+
+      // Show game board and controls
+      board.style.display = 'grid';
+      statusText.style.display = 'block';
+      resetBtn.style.display = 'inline-block';
+      backBtn.style.display = 'inline-block';
+      menu.style.display = 'none';
+
+      statusText.textContent = "Player X's turn";
+    }
+
+    function handleClick(e) {
+      const index = e.target.dataset.index;
+      if (!isGameActive || gameState[index]) return;
+
+      gameState[index] = currentPlayer;
+      e.target.textContent = currentPlayer;
+
+      if (checkWinner()) return;
+
+      if (mode === 'bot' && currentPlayer === 'X') {
+        currentPlayer = 'O';
+        statusText.textContent = "Bot's turn (O)";
+        setTimeout(botMove, 400);
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        statusText.textContent = `Player ${currentPlayer}'s turn`;
+      }
+    }
+
+    function botMove() {
+      const empty = gameState.map((v, i) => v === '' ? i : null).filter(i => i !== null);
+      if (empty.length === 0 || !isGameActive) return;
+
+      const randomIndex = empty[Math.floor(Math.random() * empty.length)];
+      gameState[randomIndex] = 'O';
+      cells[randomIndex].textContent = 'O';
+
+      if (!checkWinner()) {
+        currentPlayer = 'X';
+        statusText.textContent = "Player X's turn";
+      }
+    }
+
+    function checkWinner() {
+      for (const [a, b, c] of winConditions) {
+        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+          statusText.textContent = `${gameState[a] === 'O' && mode === 'bot' ? 'Bot' : 'Player ' + gameState[a]} wins! 🎉`;
+          isGameActive = false;
+          return true;
+        }
+      }
+
+      if (!gameState.includes('')) {
+        statusText.textContent = "It's a draw!";
+        isGameActive = false;
+        return true;
+      }
+      return false;
+    }
+
+    function resetGame() {
+      gameState = Array(9).fill('');
+      isGameActive = true;
+      currentPlayer = 'X';
+      statusText.textContent = "Player X's turn";
+      cells.forEach(cell => cell.textContent = '');
+    }
+
+    function backToMenu() {
+      resetGame();
+      board.style.display = 'none';
+      statusText.style.display = 'none';
+      resetBtn.style.display = 'none';
+      backBtn.style.display = 'none';
+      menu.style.display = 'block';
+    }
+
+    // Event Listeners
+    cells.forEach(cell => cell.addEventListener('click', handleClick));
+    resetBtn.addEventListener('click', resetGame);
+    backBtn.addEventListener('click', backToMenu);
+  </script>
+</body>
+</html>
